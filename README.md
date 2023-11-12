@@ -4,6 +4,7 @@
 To begin, download the `rpc.sh` script using the following commands:
 ```
 cd $HOME
+rm -rf $HOME/scanner
 mkdir $HOME/scanner
 cd $HOME/scanner
 wget -O rpc.sh https://raw.githubusercontent.com/itrocket-am/rpc_scanner/main/rpc.sh
