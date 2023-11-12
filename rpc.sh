@@ -30,6 +30,8 @@ else
     echo "$PUBLIC_FOLDER folder created."
 fi
 
+echo "RPC scanner started..."
+
 # Function  check_rpc_connection
 check_rpc_connection() {
     if curl -s "$RPC" | grep -q "height" > /dev/null; then
@@ -41,7 +43,6 @@ check_rpc_connection() {
 }
 
 # Function fetch_data 
-echo "RPC scanner started..."
 fetch_data() {
     local url=$1
     local data=$(curl -s --max-time 2 "$url")
@@ -62,9 +63,10 @@ declare -A rpc_list
 # Function process_data_rpc_list
 process_data_rpc_list() {
     local data=$1
+    local current_rpc_url=$2 # URL текущего обрабатываемого RPC
 
     if [ -z "$data" ]; then
-        echo "Warning: No data to process."
+        echo "Warning: No data to process from $current_rpc_url"
         return 1
     fi
 
@@ -89,7 +91,7 @@ process_data_rpc_list() {
                 echo "Processing new RPC: $rpc_combined" 
                 new_data=$(fetch_data "http://$rpc_combined/net_info")
                 if [ $? -eq 0 ]; then
-                    process_data_rpc_list "$new_data"
+                    process_data_rpc_list "$new_data" "$rpc_combined" # Передаем текущий URL как параметр
                 else
                     echo "Warning: Skipping $rpc_combined due to fetch error."
                 fi
