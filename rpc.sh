@@ -39,7 +39,7 @@ else
     echo "$PRE_FILE file created."
 fi
 
-# add check_localhost_connection function
+### check_localhost_connection function
 check_localhost_connection() {
     if curl -s --head localhost:${PORT}657 | head -n 1 | grep "200 OK" > /dev/null; then
         return 0
@@ -48,7 +48,7 @@ check_localhost_connection() {
     fi
 }
 
-# add check_rpc_connection function
+### check_rpc_connection function
 check_rpc_connection() {
     if curl -s "$RPC" | grep -q "height" > /dev/null; then
         return 0
@@ -57,7 +57,7 @@ check_rpc_connection() {
     fi
 }
 
-# add fetch_data function
+### add fetch_data function
 echo RPC scanner stated...
 fetch_data() {
     local url=$1
@@ -123,7 +123,7 @@ process_data_rpc_list() {
   done
 }
 
-# Функция для проверки доступности RPC на основе voting_power
+### check_rpc_accessibility function with voting_power
 check_rpc_accessibility() {
     local rpc=$1
     
@@ -140,24 +140,18 @@ check_rpc_accessibility() {
 
     local status_data=$(fetch_data "$protocol://$rpc/status")
 
-    # Если запрос не удался
     if [[ $? -ne 0 ]]; then
-        return 1  # недоступен
+        return 1
     fi
 
     local voting_power=$(echo "$status_data" | jq '.result.validator_info.voting_power' 2>/dev/null)
 
-    # Если поле voting_power существует
     if [[ -n "$voting_power" ]]; then
-        return 0  # доступен
+        return 0 
     else
-        return 1  # недоступен
+        return 1
     fi
 }
-
-#if check_localhost_connection; then
-#    local_data=$(fetch_data "localhost:${PORT}/net_info")
-#    process_data_rpc_list "$local_data" "None"  # "None" signifies no parent for the localhost
 
     if check_rpc_connection; then
         public_data=$(fetch_data "$RPC/net_info")
