@@ -155,9 +155,9 @@ check_rpc_accessibility() {
     fi
 }
 
-if check_localhost_connection; then
-    local_data=$(fetch_data "localhost:${PORT}/net_info")
-    process_data_rpc_list "$local_data" "None"  # "None" signifies no parent for the localhost
+#if check_localhost_connection; then
+#    local_data=$(fetch_data "localhost:${PORT}/net_info")
+#    process_data_rpc_list "$local_data" "None"  # "None" signifies no parent for the localhost
 
     if check_rpc_connection; then
         public_data=$(fetch_data "$RPC/net_info")
@@ -194,7 +194,7 @@ done < "$PRE_FILE"
 
 # Опционально: вывод содержимого $PRE_FILE
     cat "$PRE_FILE"
-fi
+#fi
 
 # Создайте файл rpc_combined.json или очистите его, если он уже существует
 FILE_PATH_JSON="/home/$PR_USER/snap/rpc_combined.json"
