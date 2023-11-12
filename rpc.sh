@@ -39,15 +39,6 @@ else
     echo "$PRE_FILE file created."
 fi
 
-### check_localhost_connection function
-check_localhost_connection() {
-    if curl -s --head localhost:${PORT}657 | head -n 1 | grep "200 OK" > /dev/null; then
-        return 0
-    else
-        return 1
-    fi
-}
-
 ### check_rpc_connection function
 check_rpc_connection() {
     if curl -s "$RPC" | grep -q "height" > /dev/null; then
@@ -153,7 +144,8 @@ check_rpc_accessibility() {
     fi
 }
 
-    if check_rpc_connection; then
+### Начинаем собирать доступные RPC
+if check_rpc_connection; then
         public_data=$(fetch_data "$RPC/net_info")
         process_data_rpc_list "$public_data" "$RPC"  # The parent here is whatever $RPC holds
     fi
