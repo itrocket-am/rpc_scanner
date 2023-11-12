@@ -1,34 +1,8 @@
 #!/bin/bash
-# Start command: sudo /bin/bash snap.sh
+# Start command: sudo /bin/bash rpc.sh
 
-read -p "Enter sleep time (sec): " SLEEP
-echo "export SLEEP=$SLEEP"
-
-# Read from 'snap.conf'
-PROJECT=$(awk -F/ '/link:/ {print $4}' snap.conf)
-TYPE=$(sed -n "/link:/s/.*https:\/\/\([^\.]*\)\..*/\1/p" snap.conf)
-PR_USER=$(sed -n "/prHome:/s/.*'\([^']*\)'.*/\1/p" snap.conf | awk -F/ '{print $NF}')
-SERVICE=$(sed -n "/bin:/s/.*'\([^']*\)'.*/\1/p" snap.conf)
-BIN=$(sed -n "/binHome:/s/.*'\([^']*\)'.*/\1/p" snap.conf)
-PORT=$(sed -n "/port:/s/.*'\([^']*\)'.*/\1/p" snap.conf)
-RPC="https://${PROJECT}-${TYPE}-rpc.itrocket.net:443"
-PEERID=$(sed -n "/peerID:/s/.*'\([^']*\)'.*/\1/p" snap.conf)
-PEERPORT=$(sed -n "/peerPort:/s/.*'\([^']*\)'.*/\1/p" snap.conf)
-PEERS=${PEERID}@${PROJECT}-${TYPE}-peer.itrocket.net:${PEERPORT}
-snapMaxSize=$(sed -n "/snapMaxSize:/s/.*'\([^']*\)'.*/\1/p" snap.conf)
-PR_PATH=$(sed -n "/path:/s/.*'\([^']*\)'.*/\1/p" snap.conf)
-NODE_PATH=/home/${PR_USER}/${PR_PATH}/
-RESET=$(sed -n "/reset:/s/.*'\([^']*\)'.*/\1/p" snap.conf)
-rpcStatus=$(sed -n "/rpcStatus:/s/.*'\([^']*\)'.*/\1/p" snap.conf)
-
-# Check folder on the file server
-PUBLIC_FOLDER=/var/www/$TYPE-files/$PROJECT
-if [ -d "$PUBLIC_FOLDER" ]; then
-    echo "$PUBLIC_FOLDER folder exists."
-else
-    mkdir /var/www/$TYPE-files/$PROJECT
-    echo "$PUBLIC_FOLDER folder created."
-fi
+# Specify the rpc address
+RPC="https://empower-mainnet-rpc.itrocket.net:443"
 
 echo "RPC scanner started..."
 
@@ -135,8 +109,7 @@ if check_rpc_connection; then
 fi
 
 # Creating and populating the rpc_combined.json file
-FILE_PATH_JSON="/home/$PR_USER/snap/rpc_combined.json"
-PUBLIC_FILE_JSON="/var/www/$TYPE-files/$PROJECT/.rpc_combined.json"
+FILE_PATH_JSON="/home/rpc_combined.json"
 
 # Generate JSON data in memory
 json_data="{"
@@ -174,13 +147,7 @@ json_data+="}"
 sorted_json=$(echo "$json_data" | jq 'to_entries | sort_by(.value.earliest_block_height | tonumber) | from_entries')
 
 # Write sorted and formatted JSON data to file
-echo "$sorted_json" > "$FILE_PATH_JSON"
-
-# Copying the JSON file to a public location
-if ! cp "$FILE_PATH_JSON" "$PUBLIC_FILE_JSON"; then
-    echo "Error: Failed to copy JSON file to public location" >&2
-    exit 1
-fi
+echo "$sorted_json" > "rpc_result.json"
 
 # Uncomment the following line if you want to see the file content
-# cat $PUBLIC_FILE_JSON
+# cat $PFILE_PATH_JSON
