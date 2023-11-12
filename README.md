@@ -7,7 +7,7 @@ cd $HOME
 mkdir $HOME/scanner
 cd $HOME/scanner
 wget -O rpc.sh https://raw.githubusercontent.com/itrocket-am/rpc_scanner/main/rpc.sh
-chmod + x rpc.sh
+chmod +x rpc.sh
 ```
 
 ## Specify the Parent RPC
