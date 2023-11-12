@@ -1,5 +1,5 @@
 #!/bin/bash
-# Start command: sudo /bin/bash rpc.sh
+# Start command: /bin/bash rpc.sh
 
 # Specify the rpc address
 RPC="https://empower-mainnet-rpc.itrocket.net:443"
