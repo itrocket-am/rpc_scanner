@@ -48,7 +48,7 @@ fetch_data() {
     local data=$(curl -s --max-time 2 "$url")
     
     if [ $? -ne 0 ]; then
-        echo "Error: Failed to fetch data from $url"
+        echo "Error: Failed to fetch data from $url" >&2
         return 1
     fi
     
@@ -123,7 +123,6 @@ check_rpc_accessibility() {
     if [[ "$rpc_network" == "$PARENT_NETWORK" ]]; then
         return 0 
     else
-        echo "Warning: Network mismatch for $rpc. Expected: $PARENT_NETWORK, Found: $rpc_network"
         return 1
     fi
 }
@@ -132,23 +131,18 @@ check_rpc_accessibility() {
 if check_rpc_connection; then
     public_data=$(fetch_data "$RPC/net_info")
     process_data_rpc_list "$public_data" "$PARENT_NETWORK"
-    echo PARENT_NETWORK = $PARENT_NETWORK
+    echo "Checking chain_id = $PARENT_NETWORK..."
 fi
 
 # Creating and populating the rpc_combined.json file
 FILE_PATH_JSON="/home/$PR_USER/snap/rpc_combined.json"
 PUBLIC_FILE_JSON="/var/www/$TYPE-files/$PROJECT/.rpc_combined.json"
 
-# If the file exists, clear it. If not, create it.
-[[ -f $FILE_PATH_JSON ]] && > "$FILE_PATH_JSON" || touch "$FILE_PATH_JSON"
+# Generate JSON data in memory
+json_data="{"
 
-# Start the JSON file by opening an object
-echo "{" > $FILE_PATH_JSON
-
-# Variable for determining the first entry to avoid adding a comma before the first object
 first_entry=true
 
-# Loop to read each line from the RPC list
 for rpc in "${!rpc_list[@]}"; do
     if check_rpc_accessibility "$rpc"; then
         data=$(fetch_data "$rpc/status")
@@ -161,21 +155,32 @@ for rpc in "${!rpc_list[@]}"; do
         voting_power=$(echo "$data" | jq -r '.result.validator_info.voting_power')
         scan_time=$(date '+%FT%T.%N%Z')
 
-        if [ "$first_entry" = true ]; then
-            first_entry=false
-        else
-            echo "," >> $FILE_PATH_JSON
-        fi
+        # Добавление только если catching_up равно false
+        if [ "$catching_up" = "false" ]; then
+            if [ "$first_entry" = false ]; then
+                json_data+=","
+            else
+                first_entry=false
+            fi
 
-        echo -ne "  \"$rpc\": {\n    \"network\": \"$network\",\n    \"moniker\": \"$moniker\",\n    \"tx_index\": \"$tx_index\",\n    \"latest_block_height\": \"$latest_block_height\",\n    \"earliest_block_height\": \"$earliest_block_height\",\n    \"catching_up\": $catching_up,\n    \"voting_power\": \"$voting_power\",\n    \"scan_time\": \"$scan_time\"\n  }" >> $FILE_PATH_JSON
+            json_data+="\"$rpc\": {\"network\": \"$network\", \"moniker\": \"$moniker\", \"tx_index\": \"$tx_index\", \"latest_block_height\": \"$latest_block_height\", \"earliest_block_height\": \"$earliest_block_height\", \"catching_up\": $catching_up, \"voting_power\": \"$voting_power\", \"scan_time\": \"$scan_time\"}"
+        fi
     fi
 done
 
-# Closing the JSON object
-echo "}" >> $FILE_PATH_JSON
+json_data+="}"
+
+# Sort JSON data by earliest_block_height and format it
+sorted_json=$(echo "$json_data" | jq 'to_entries | sort_by(.value.earliest_block_height | tonumber) | from_entries')
+
+# Write sorted and formatted JSON data to file
+echo "$sorted_json" > "$FILE_PATH_JSON"
 
 # Copying the JSON file to a public location
-sudo cp $FILE_PATH_JSON $PUBLIC_FILE_JSON
+if ! cp "$FILE_PATH_JSON" "$PUBLIC_FILE_JSON"; then
+    echo "Error: Failed to copy JSON file to public location" >&2
+    exit 1
+fi
 
 # Uncomment the following line if you want to see the file content
 # cat $PUBLIC_FILE_JSON
